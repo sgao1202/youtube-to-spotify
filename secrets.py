@@ -1,2 +1,2 @@
-spotify_token = "BQCvoPJbOT4Q26BE6_uPJv4EKqY_L9IRizMGH0Hg-FGBffa7HurEkCdGLIWkD8ZBFUvyU1SFGLypSyXkNTvcvPBUCKYA924_ZhiVAKW8m20lyz0uye6CcBCni-YXZoXjeFm_QSOjhkb41SxkvhLYgjeAP9r_njDraQqOgjgRZUIe0J1RNKA6GdnZAviqFmSF5wawRsgYCg"
-spotify_user_id = "sgao1202"
+spotify_token = "{spotify oauth token found on Spotify Web API}"
+spotify_user_id = "{your spotify username}" 
