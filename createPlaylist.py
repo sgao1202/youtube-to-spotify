@@ -9,8 +9,8 @@ import googleapiclient.errors
 import requests
 import youtube_dl
 
-from secrets import spotify_token, spotify_user_id
-
+from secrets import Secrets
+from playlistInfo import PlaylistInformation
 
 '''
     1) Log onto YouTube
@@ -21,9 +21,15 @@ from secrets import spotify_token, spotify_user_id
 '''
 
 class CreatePlaylist:
-    def __init__(self):
+    def __init__(self, old_playlist_id, spotify_secrets, playlist_info):
         self.youtube_client = self.__get_youtube_client()
-        # Dictionary of key/value pairs where keys are the video titles and the correlating values are dictionaries containing each video's song information
+        self.youtube_playlist_id = old_playlist_id
+
+        # Spotify login information
+        self.secrets = spotify_secrets
+
+        # New Spotify playlist information
+        self.playlist_information = playlist_info
         self.song_titles = []
         self.unsearchable_songs = []
 
@@ -79,7 +85,8 @@ class CreatePlaylist:
         request = self.youtube_client.playlistItems().list(
             part="snippet,contentDetails",
             maxResults=50,
-            playlistId="PL8-_Vsx34R12975mckpwienGds1ytI7kI"
+            #playlistId="PL8-_Vsx34R12975mckpwienGds1ytI7kI"
+            playlistId=self.youtube_playlist_id
         )
         response = request.execute()
         
@@ -97,7 +104,8 @@ class CreatePlaylist:
                     part="snippet,contentDetails",
                     maxResults=50,
                     pageToken = response["nextPageToken"],
-                    playlistId="PL8-_Vsx34R12975mckpwienGds1ytI7kI"
+                    #playlistId="PL8-_Vsx34R12975mckpwienGds1ytI7kI"
+                    playlistID=self.youtube_playlist_id
                 )
                 response = request.execute()
         
@@ -106,17 +114,17 @@ class CreatePlaylist:
             Create a new and empty playlist on Spotify
         '''
         body = {
-            "name":"YouTube Music Playlist",
-            "description": "YouTube playlist converted into Spotify playlist", 
-            "public": True
+            "name": self.playlist_information.get_title(),
+            "description": self.playlist_information.get_description(),
+            "public": self.playlist_information.get_publicy()
         }
 
         request_body = json.dumps(body) 
     
-        query = "https://api.spotify.com/v1/users/{}/playlists".format(spotify_user_id)
+        query = "https://api.spotify.com/v1/users/{}/playlists".format(self.secrets.get_user_id())
         response = requests.post(query, data=request_body, headers={
                 "Content-Type": "application/json",
-                "Authorization": "Bearer {}".format(spotify_token)
+                "Authorization": "Bearer {}".format(self.secrets.get_token())
             })
         response_json = response.json()
         #json_string = json.dumps(response_json, indent=2, sort_keys=True)
@@ -135,7 +143,7 @@ class CreatePlaylist:
 
         response = requests.get(query, headers={
             "Content-type": "application/json",
-            "Authorization": "Bearer {}".format(spotify_token)
+            "Authorization": "Bearer {}".format(self.secrets.get_token())
         })
         response_json = response.json()
         if "error" in response_json or "tracks" not in response_json or response_json["tracks"]["items"] == []:
@@ -155,18 +163,14 @@ class CreatePlaylist:
             query = "https://api.spotify.com/v1/playlists/{}/tracks?uris={}".format(spotify_playlist_id, uri)
             response = requests.post(query, headers={
                 "Content-type": "application/json",
-                "Authorization": "Bearer {}".format(spotify_token)
+                "Authorization": "Bearer {}".format(self.secrets.get_token())
             })
 
         for title in self.song_titles:
             current_uri = self.__get_spotify_uri(title)
             add_song(current_uri)
 
-if __name__ == "__main__":
-    new_playlist = CreatePlaylist()
-    new_playlist.add_songs_to_playlist()
-    print(new_playlist.unsearchable_songs)
-    
-
-
-    
+# if __name__ == "__main__":
+#     new_playlist = CreatePlaylist()
+#     new_playlist.add_songs_to_playlist()
+#     print(new_playlist.unsearchable_songs)
